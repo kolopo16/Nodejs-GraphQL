@@ -11,13 +11,13 @@ let UserType = new GraphQLObjectType({
     fields: function () {
         return {
             id: {
-                type: GraphQLInt
+                type: new GraphQLNonNull(GraphQLInt)
             },
             username: {
-                type: GraphQLString
+                type: new GraphQLNonNull(GraphQLString)
             },
             password: {
-                type: GraphQLString
+                type: new GraphQLNonNull(GraphQLString)
             },
             url: {
                 type: GraphQLString
@@ -70,14 +70,46 @@ let UserAdd = {
             type: GraphQLString
         },
     },
-    resolve: function (root, {input}) {
+    resolve: function (root, {username, password, url, note}) {
+        let id = 1
         Users.push({
-            id: 1,
-            username: input.username,
-            password: input.password,
-            url: input.url,
-            note: input.note
+            id: id,
+            username: username,
+            password: password,
+            url: url,
+            note: note
         });
+
+        return Users;
+    }
+}
+
+let UserUpdate = {
+    type: new GraphQLList(UserType),
+    description: 'update user',
+    args: {
+        id: {
+            name: 'ID',
+            type: new GraphQLNonNull(GraphQLInt)
+        },
+        password: {
+            name: 'Password',
+            type: new GraphQLNonNull(GraphQLString)
+        },
+        url: {
+            name: 'URL',
+            type: GraphQLString
+        },
+        note: {
+            name: 'Note',
+            type: GraphQLString
+        },
+    },
+    resolve: function (root, {id, password, url, note}) {
+        let user = Users.find(q => q.id == id);
+        user.password = password;
+        user.url = url;
+        user.note = note;
 
         return Users;
     }
@@ -87,7 +119,8 @@ let mutationType = new GraphQLObjectType({
     name: 'mutation',
     fields: function () {
         return {
-            addUser: UserAdd
+            addUser: UserAdd,
+            updateUser: UserUpdate
         }
     }
 })
