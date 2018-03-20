@@ -5,7 +5,7 @@ var graphql = require('graphql').graphql;
 // var bodyParser = require('body-parser');
 
 let app = express();
-let PORT = 3000;
+let PORT = 8080;
 
 // app.use(bodyParser.text({ type: 'application/graphql' }));
 
