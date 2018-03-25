@@ -4,14 +4,18 @@ var { GraphQLString,
     GraphQLObjectType,
     GraphQLNonNull,
     GraphQLSchema } = require('graphql');
-var Users = require('./data/Users.json');
+// var Users = require('./data/Users.json');
+var Users = require('./data/users');
 
 let UserType = new GraphQLObjectType({
     name: 'user',
     fields: function () {
         return {
             id: {
-                type: new GraphQLNonNull(GraphQLInt)
+                type: new GraphQLNonNull(GraphQLString)
+            },
+            title: {
+                type: new GraphQLNonNull(GraphQLString)
             },
             username: {
                 type: new GraphQLNonNull(GraphQLString)
@@ -36,15 +40,21 @@ let queryType = new GraphQLObjectType({
             allUsers: {
                 type: new GraphQLList(UserType),
                 resolve: function () {
-                    return Users;
+                    return Users.queryUser();
                 }
             },
-            // userByID: {
-            //     type: new GraphQLList(UserType),
-            //     resolve: function (root, {id}) {
-            //         return Users.findById(id, Users);
-            //     }
-            // }
+            userByID: {
+                type: new GraphQLList(UserType),
+                args: {
+                    id: {
+                        name: "ID",
+                        type: new GraphQLNonNull(GraphQLString)
+                    }
+                },
+                resolve: function (root, {id}) {
+                    return Users.queryUser().then((users) => users.filter(user => user.id == id));
+                }
+            }
         }
     }
 });
@@ -53,6 +63,10 @@ let UserAdd = {
     type: new GraphQLList(UserType),
     description: 'Add user',
     args: {
+        title: {
+            name: 'Title',
+            type: new GraphQLNonNull(GraphQLString)
+        },
         username: {
             name: 'Username',
             type: new GraphQLNonNull(GraphQLString)
@@ -70,17 +84,11 @@ let UserAdd = {
             type: GraphQLString
         },
     },
-    resolve: function (root, {username, password, url, note}) {
-        let id = 1
-        Users.push({
-            id: id,
-            username: username,
-            password: password,
-            url: url,
-            note: note
-        });
+    resolve: function (root, input) {
+        input.id = guid();
+        Users.addNewUser(input);
 
-        return Users;
+        return Users.queryUser().then((users) => users.filter(user => user.id == input.id));
     }
 }
 
@@ -90,7 +98,11 @@ let UserUpdate = {
     args: {
         id: {
             name: 'ID',
-            type: new GraphQLNonNull(GraphQLInt)
+            type: new GraphQLNonNull(GraphQLString)
+        },
+        title: {
+            name: 'Title',
+            type: new GraphQLNonNull(GraphQLString)
         },
         password: {
             name: 'Password',
@@ -105,13 +117,26 @@ let UserUpdate = {
             type: GraphQLString
         },
     },
-    resolve: function (root, {id, password, url, note}) {
-        let user = Users.find(q => q.id == id);
-        user.password = password;
-        user.url = url;
-        user.note = note;
+    resolve: function (root, input) {
+        Users.updateUser(input);
 
-        return Users;
+        return Users.queryUser().then((users) => users.filter(user => user.id == input.id));
+    }
+}
+
+let UserDelete = {
+    type: new GraphQLList(UserType),
+    description: 'update user',
+    args: {
+        id: {
+            name: 'ID',
+            type: new GraphQLNonNull(GraphQLString)
+        },
+    },
+    resolve: function (root, {id}) {
+        Users.deleteUser(id);
+
+        return [];
     }
 }
 
@@ -120,7 +145,8 @@ let mutationType = new GraphQLObjectType({
     fields: function () {
         return {
             addUser: UserAdd,
-            updateUser: UserUpdate
+            updateUser: UserUpdate,
+            deleteUser: UserDelete,
         }
     }
 })
@@ -129,5 +155,12 @@ let schema = new GraphQLSchema({
     query: queryType,
     mutation: mutationType
 });
+
+let guid = function () {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
 
 module.exports = schema;
