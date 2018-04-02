@@ -4,7 +4,6 @@ var { GraphQLString,
     GraphQLObjectType,
     GraphQLNonNull,
     GraphQLSchema } = require('graphql');
-// var Users = require('./data/Users.json');
 var Users = require('./data/users');
 
 let UserType = new GraphQLObjectType({

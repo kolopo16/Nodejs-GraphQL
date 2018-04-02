@@ -15,6 +15,12 @@ var users = {
             return allusers;
         })
     },
+    queryUserID: function (id) {
+        return userRef.child(id).once('value').then(function(snapshot) {
+            var user = snapshot.val();
+            return user;
+        })
+    },
     addNewUser: function (input) {
         var inputData = {
             id: input.id,
@@ -24,7 +30,10 @@ var users = {
             url: input.url,
             note: input.note
         }
-        database().ref('users/' + input.id).set(inputData);
+        userRef.child(input.id).set(inputData);
+        // database().ref('users/' + input.id).set(inputData);
+
+        return this.queryUserID(input.id);
     },
     updateUser: function (input) {
         var updateData = {
@@ -33,10 +42,14 @@ var users = {
             url: input.url,
             note: input.note
         }
-        database().ref('users/' + input.id).update(updateData);
+        userRef.child(input.id).update(updateData);
+        // database().ref('users/' + input.id).update(updateData);
+
+        return this.queryUserID(id);
     },
     deleteUser: function (id) {
-        database().ref('users/' + id).remove();
+        userRef.child(id).remove();
+        // database().ref('users/' + id).remove();
     }
 }
 
